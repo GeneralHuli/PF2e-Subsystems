@@ -1,14 +1,16 @@
 import { HooksPF2e_Subsystems } from "./hooks.js";
 import { VPPF2eSub } from "./subsystems/vp-subsystem/pf2e-subs-vp.js";
 import { ChasePF2eSub } from "./subsystems/chase-subsystem/pf2e-subs-chase.js";
+import { registerHandlebarsHelpers } from "./helpers.js"
 
 const SUBSYSTEMS = {
     vpsubs: {classObj: VPPF2eSub, name: "Victory Points", view: "vpsubs"},
     chasesubs: {classObj: ChasePF2eSub, name: "Chase", view: "chasesubs"},
 }
 
-//Register the Hooks
+//Register the Hooks and Handlebars Helpers
 HooksPF2e_Subsystems.listen();
+registerHandlebarsHelpers();
 
 class PF2e_Subsystems {
     subNav = $(`<a data-tab="subsystems">Subsystems</a>`);
@@ -69,7 +71,7 @@ class PF2e_Subsystems {
         this.html = html;
         let element = this.html.find(".sub-nav");
 
-        let tab = await renderTemplate([this.template], this.getData())
+        let tab = await foundry.applications.handlebars.renderTemplate([this.template], this.getData())
 
         element.append(this.subNav);
         element = this.html.find(".container");
@@ -102,11 +104,12 @@ class PF2e_Subsystems {
     };
 
     editSubsystem({subType, id=null}) {
+        let subsystem;
         if(id) {
-            var subsystem = this.newSubsystem(this.subsystemData[subType][id])
+            subsystem = this.newSubsystem(this.subsystemData[subType][id])
         }
         else {
-            var subsystem = this.newSubsystem({subType: subType});
+            subsystem = this.newSubsystem({subType: subType});
         };
         
         subsystem.render(true);

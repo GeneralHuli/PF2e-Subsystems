@@ -1,50 +1,10 @@
-const { ApplicationV2, HandlebarsApplicationMixin, DocumentSheetV2 } = foundry.applications.api;
-const { BaseSheet } = foundry.applications.api.DocumentSheetV2;
-
-export class BasePF2eSub extends HandlebarsApplicationMixin(ApplicationV2) {
+export class BasePF2eSub extends FormApplication {
     type = 'pf2e-subsystem';
-    static DEFAULT_OPTIONS = {
-        tag: "form",
-        classes: ['pf2e-subsystem', 'sheet', 'pf2e', 'action', 'item'],
-        id: 'subsystems-configure',
-        position: {
-            width: 775,
-            height: 500,
-        },
-        window: {
-            title: 'Edit Subsystem',
-            resizable: true,
-            frame: true,
-        },
-        form: {
-            handler: BasePF2eSub._updateObject,
-            submitOnChange: false,
-            closeOnSubmit: false,
-            tabs: [
-                {
-                    navSelector: ".tabs",
-                    contentSelector: ".sheet-body",
-                    initial: "description",
-                },
-            ],
-            dragDrop: [
-                { dropSelector: ".itemBar" },
-            ]
-        },
-        actions: {
-
-        },
-    };
-    static PARTS = {
-        header: {template: "modules/pf2e-subsystems/templates/sub-header.hbs" },
-        tabs: { template: "modules/pf2e-subsystems/templates/sub-tabs.hbs" },
-        content: { template: "modules/pf2e-subsystems/templates/sub-description.hbs" },
-    };
 
     constructor(party, object, ...options) {
         super(object, options);
         this.party = party;
-        this.object = foundry.utils.mergeObject(object, {
+        this.object = foundry.utils.mergeObject(this.object, {
             title: "New Activity",
             rewards: {},
             combined: true,
@@ -85,13 +45,6 @@ export class BasePF2eSub extends HandlebarsApplicationMixin(ApplicationV2) {
                 { dropSelector: ".itemBar" },
             ]
         });
-    }
-
-    _configureRenderOptions(options) {
-        super._configureRenderOptions(options);
-        options.parts = ['header', 'tabs', 'content'];
-        console.log("subsystem options", options)
-        console.log("This", this)
     }
 
     async getData(options = {}) {
@@ -386,7 +339,7 @@ export class BasePF2eSub extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     async expandReward($html, id, fast = false) {
-        let allCollapsed = true;
+        var allCollapsed = true;
         const duration = fast ? 0 : 0.4
         for(const rewardSummary of $html.find(".reward-summary")) {
             if(rewardSummary.dataset.id === id && rewardSummary.hidden) {

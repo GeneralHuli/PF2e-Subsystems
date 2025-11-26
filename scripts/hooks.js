@@ -8,8 +8,14 @@ export const HooksPF2e_Subsystems = {
 
         Hooks.once("init", async function () {
             console.log("PF2e Subsystems | Initializing pf2e-subsystems");
-            let template = "modules/pf2e-subsystems/templates/subsystems.hbs";
-            await loadTemplates([template]);
+            let templates = [
+                "modules/pf2e-subsystems/templates/subsystems.hbs",
+                //"modules/pf2e-subsystems/templates/partials/vp-sidebar.hbs",
+
+                //"modules/pf2e-subsystems/templates/partials/edit-vp-action.hbs",
+                //"modules/pf2e-subsystems/templates/partials/summary-vp-action.hbs",
+            ]
+            await loadTemplates(templates);
 
             $('head').append($('<script src="https://raw.githack.com/SortableJS/Sortable/master/Sortable.js"></script>'))
         });
@@ -30,22 +36,6 @@ export const HooksPF2e_Subsystems = {
                 party.sheet._tabs[0].activate('subsystems');
                 party.subsystems.renderTab = false;
             }
-
-            /*let button = html.find("[data-sub-buttons]")[0]
-            button.addEventListener("click", (event) => {
-                let action = event.srcElement.dataset.action;
-
-                switch(action) {
-                    case "newButton": 
-                        PFSS.NewSubsystem({party: party, type: "vpsubs"});
-                        break;
-                    case "saveButton": 
-                        PFSS.SaveSubsystems(actorSheet.actor);
-                        break;
-                    case "initButton":
-                        PFSS.InitSubsystems(actorSheet.actor);
-                }
-            });*/
             
         });
     }

@@ -1,67 +1,86 @@
-<form class="editable" autocomplete="off">
+<div class="editable" autocomplete="off">
     <header class="sheet-header">
         <img src="systems/pf2e/icons/actions/Passive.webp" data-edit="img">
         <div class="details">
             <input name="title" type="text" value="{{object.title}}" placeholder="Activity Name" spellcheck="false" aria-label="Name">
         </div>
     </header>
+    <div class="sidebar-summary">Activity Settings</div>
     <nav class="sheet-tabs">
-        <div class="sidebar-summary">Activity Settings</div>
         <div class="tabs" data-tab-container="primary">
             <a class="list-row" data-tab="description">Description</a>
             <a class="list-row" data-tab="actions">Actions</a>
             <a class="list-row" data-tab="rewards">Rewards</a>
         </div>
-    </nav>
+    </nav>  
     <div class="sheet-content">
         <section class="sidebar" data-tooltip-direction="UP">
-            <div class="inventory-details">
-                <div class="form-group">
-                    <label for="activity-points">Current Points</label>
-                    <input id="activity-points" name="points" type="number" value={{object.points}} />
-                </div>
-                <div class="form-group">
-                    <label for="activity-endPoint">End Goal</label>
-                    <input id="activity-endPoint" name="endPoint" type="number" value={{object.endPoint}} />
-                </div>
-                <div class="form-group">
-                    <label for="activity-success">Default Success Rate</label>
-                    <input id="activity-success" name="success" type="text" value={{object.success}} />
-                </div>
-                <div class="form-group">
-                    <label for="activity-turnBased">Turn Based Activity</label>
-                    <input id="activity-turnBased" name="turnBased" type="checkbox" {{#if object.turnBased}}checked{{/if}} />
-                </div>
-                <div class="form-group">
-                    <label for="activity-automatic">Accrued Per Turn</label>
-                    <input id="activity-automatic" name="automatic" type="number" value={{object.automatic}} />
-                </div>
-            </div>
+            {{#if object.details.template}}
+                {{> (lookup (lookup object 'details') 'template') }}
+            {{/if}}
         </section>
         <div class="sheet-body">
-            <section class="tab description" data-tab="description">
+            <section class="tab description {{tab.cssClass}}" data-tab="description" data-group="primary">
                 <section class="main editor-container">
                     {{editor enrichedContent.description target="description" button=true editable=true engine="prosemirror"}}
                 </section>
             </section>
-            <section class="tab actions" data-tab="actions">
-
+            <section class="tab actions {{tab.cssClass}}" data-tab="actions" data-group="primary">
+                <section class="action-list">
+                    {{#each object.actionTypes as |type|}}
+                        <header>
+                            <h3 class="actionType-name">{{type}}</h3>
+                            <div class="actionType-controls">
+                                <a data-action="add-action" data-tooltip="Create new '{{type}}'" data-type={{type}}>
+                                    <i class="fa-solid fa-fw fa-plus"></i>
+                                </a>
+                            </div>
+                        </header>
+                        {{#unless (isEmpty (lookup @root.object.actions type))}}
+                            <ul class="actions" data-type={{type}}>
+                            {{#each (lookup @root.object.actions type) as |action|}}
+                                <li data-id={{action.id}}>
+                                    <div class="data">
+                                        <div class="action-name">
+                                            <h4 class="name">
+                                                <a data-action="toggle-summary">{{action.name}}</a>
+                                            </h4>
+                                        </div>
+                                        <div class="action-controls">
+                                            <a data-action="edit-action" data-tooltip="Edit Action" data-id={{action.id}} data-type={{type}}>
+                                                <i class="fa-solid fa-fw fa-edit"></i>
+                                            </a>
+                                            <a data-action="delete-action" data-tooltip="Delete Action" data-id={{action.id}} data-type={{type}}>
+                                                <i class="fa-solid fa-fw fa-trash"></i>
+                                            </a>
+                                        </div>
+                                        <div class="action-summary" data-id={{action.id}} hidden="hidden">
+                                            {{> (lookup action 'summaryTemplate') action=action type=type }}
+                                        </div>
+                                    </div>
+                                </li>
+                            {{/each}}
+                            </ul>
+                        {{/unless}}
+                    {{/each}}
+                </section>
             </section>
-            <section class="tab rewards" data-tab="rewards">
+            <section class="tab rewards {{tab.cssClass}}" data-tab="rewards" data-group="primary">
                 <div class="rewards">
                     <div class="rewards-forms">
                         {{#each object.rewards as |reward|}}
                             <section class="rewards-form" data-id={{reward.id}}>
                                 <header class="reward-header">
                                     <i class="fa-solid fa-bars drag-handle"></i>
-                                    <h3>Reward Rank</h3><input name="rewards.{{reward.id}}.rank" type="number" value={{reward.rank}} style="width: 3rem;"/>
+                                    <h3 class="title" data-action="expand-reward" data-id={{reward.id}}>Reward Rank</h3>
+                                    <input name="rewards.{{reward.id}}.rank" type="number" value={{reward.rank}} style="width: 3rem;"/>
                                     <div class="item-controls">
                                         <a class="remove-reward" data-id={{reward.id}} data-tooltip="Remove Reward">
                                             <i class="fa-solid fa-fw fa-trash"></i>
                                         </a>
                                     </div>
                                 </header>
-                                <div class="container" style="display: grid;">
+                                <div class="container reward-summary" style="display: grid;" data-id={{reward.id}} hidden="hidden">
                                     <div class="stacked">
                                         <div class="grid-item xp">
                                             <label>XP</label>
@@ -69,11 +88,22 @@
                                         </div>
                                         <div class="grid-item treasure">
                                             <label>Treasure:</label>
-                                            <label>pp</label><input name="rewards.{{reward.id}}.treasure.pp" type="number" value={{reward.treasure.pp}} />
-                                            <label>gp</label><input name="rewards.{{reward.id}}.treasure.gp" type="number" value={{reward.treasure.gp}} />
-                                            <label>sp</label><input name="rewards.{{reward.id}}.treasure.sp" type="number" value={{reward.treasure.sp}} />
-                                            <label>cp</label><input name="rewards.{{reward.id}}.treasure.cp" type="number" value={{reward.treasure.cp}} />
+                                            <label>pp</label><input name="rewards.{{reward.id}}.treasure.pp" type="number" value={{reward.treasure.pp}} >
+                                            <label>gp</label><input name="rewards.{{reward.id}}.treasure.gp" type="number" value={{reward.treasure.gp}} >
+                                            <label>sp</label><input name="rewards.{{reward.id}}.treasure.sp" type="number" value={{reward.treasure.sp}} >
+                                            <label>cp</label><input name="rewards.{{reward.id}}.treasure.cp" type="number" value={{reward.treasure.cp}} >
                                         </div>
+                                    </div>
+                                    <div class="grid-item items">
+                                        <label>Items</label>
+                                        <div class="itemBar" data-id={{reward.id}}>
+                                            {{#each reward.enrichedItems}}{{{itemButton @index this}}}{{/each}}
+                                            <span data-placeholder="Drag items here" aria-placeholder="Drag items here"></span>
+                                        </div>
+                                    </div>
+                                    <div class="grid-item notes">
+                                        <label>Notes</label>
+                                        <textarea name="rewards.{{reward.id}}.notes" placeholder="Notes">{{reward.notes}}</textarea>
                                     </div>
                                 </div>
                             </section>
@@ -89,4 +119,4 @@
             </section>
         </div>
     </div>
-</form>
+</div>

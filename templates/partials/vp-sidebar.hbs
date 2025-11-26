@@ -1,0 +1,18 @@
+<section class="sheet-details sidebar" data-tooltip-direction="UP">
+    <div class="form-group">
+        <label for="activity-points">Current Points</label>
+        <input id="activity-points" name="details.points" type="number" value={{object.details.points}} />
+    </div>
+    <div class="form-group">
+        <label for="activity-endPoint">End Goal</label>
+        <input id="activity-endPoint" name="details.endPoint" type="number" value={{object.details.endPoint}} />
+    </div>
+    <div class="form-group">
+        <label for="activity-turnBased">Turn Based Activity</label>
+        <input id="activity-turnBased" name="details.turnBased" type="checkbox" {{#if object.details.turnBased}}checked{{/if}} />
+    </div>
+    <div class="form-group">
+        <label for="activity-automatic">Accrued Per Turn</label>
+        <input id="activity-automatic" name="details.automatic" type="number" value={{object.details.automatic}} />
+    </div>
+</section>
