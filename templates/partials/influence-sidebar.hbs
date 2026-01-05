@@ -1,0 +1,67 @@
+<section class="sheet-details sidebar" data-tooltip-direction="UP">
+    <div class="inventory-details">
+        <div class="form-group">
+            <label for="target-uuid">Target</label>
+            {{#unless (isEmpty object.details.targetUUID)}}
+                <div class="influenceTarget" data-drop="true" data-id="target-uuid" aria-label="Drag items here">
+                    {{{targetButton enrichedContent.target}}}
+                </div>
+            {{else}}
+                <div class="influenceTarget" data-drop="true" data-id="target-uuid" aria-label="Drag items here">
+                    <span data-placeholder="Drag target here" aria-hidden="true"></span>
+                </div>
+            {{/unless}}
+            
+        </div>
+        <div class="form-group">
+            <label for="activity-influence">Current Influence</label>
+            <input data-id="activity-influence" name="details.influencePoints" type="number" value={{object.details.influencePoints}} />
+        </div>
+        <div class="sidebar-sep" aria-hidden="true"></div>
+        <div class="form-group">
+            <label for="target-perception">Target Perception</label>
+            <input data-id="target-perception" name="details.targetPerception" type="number" value={{object.details.targetPerception}} />
+        </div>
+        <div class="form-group">
+            <label for="target-will">Target Will</label>
+            <input data-id="target-will" name="details.targetWill" type="number" value={{object.details.targetWill}} />
+        </div>
+        <div class="sidebar-sep" aria-hidden="true"></div>
+        <div class="form-group textarea-group">
+            <label for="target-resistance">Resistance</label>
+            <prose-mirror name="details.targetResistance" value="{{object.details.targetResistance}}" toggled="true">
+            {{{object.details.targetResistance}}}
+            </prose-mirror>
+        </div>
+        <div class="form-group textarea-group">
+            <label for="target-weakness">Weakness</label>
+            <prose-mirror name="details.targetWeakness" value="{{object.details.targetWeakness}}" toggled="true">
+            {{{object.details.targetWeakness}}}
+            </prose-mirror>
+        </div>
+        <div class="form-group textarea-group">
+            <label for="target-background">Background</label>
+            <prose-mirror name="details.targetBackground" value="{{object.details.targetBackground}}" toggled="true">
+            {{{object.details.targetBackground}}}
+            </prose-mirror>
+        </div>
+        <div class="form-group textarea-group">
+            <label for="target-appearance">Appearance</label>
+            <prose-mirror name="details.targetAppearance" value="{{object.details.targetAppearance}}" toggled="true">
+            {{{object.details.targetAppearance}}}
+            </prose-mirror>
+        </div>
+        <div class="form-group textarea-group">
+            <label for="target-personality">Personality</label>
+            <prose-mirror name="details.targetPersonality" value="{{object.details.targetPersonality}}" toggled="true">
+            {{{object.details.targetPersonality}}}
+            </prose-mirror>
+        </div>
+        <div class="form-group textarea-group">
+            <label for="target-penalty">Penalty</label>
+            <prose-mirror name="details.targetPenalty" value="{{object.details.targetPenalty}}" toggled="true">
+            {{{object.details.targetPenalty}}}
+            </prose-mirror>
+        </div>
+    </div>
+</section>

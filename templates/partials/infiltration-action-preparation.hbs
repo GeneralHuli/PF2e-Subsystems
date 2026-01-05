@@ -1,0 +1,17 @@
+<section class="requirements-section">
+  <label for="requirements">Requirements</label>
+  {{#if action.editable}}
+    <input data-id="requirements" name="actions.{{type}}.{{action.id}}.requirements" type="text" value="{{action.requirements}}">
+  {{else}}
+    <div data-id="requirements">{{action.requirements}}</div>
+  {{/if}}
+</section>
+<section class="description-section">
+  {{#if action.editable}}
+    <prose-mirror name="actions.{{type}}.{{action.id}}.description" value="{{action.description}}" toggled="true">
+      {{{lookup (lookup (lookup enrichedContent.actions type) action.id) 'description'}}}
+    </prose-mirror>
+  {{else}}
+    {{{lookup (lookup (lookup enrichedContent.actions type) action.id) 'description'}}}
+  {{/if}}
+</section>

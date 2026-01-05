@@ -1,11 +1,12 @@
-const { ApplicationV2, HandlebarsApplicationMixin, DocumentSheetV2 } = foundry.applications.api;
-const { BaseSheet } = foundry.applications.api.DocumentSheetV2;
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+const { DragDrop } = foundry.applications.ux;
 
 export class BasePF2eSub extends HandlebarsApplicationMixin(ApplicationV2) {
+    #dragDrop
     type = 'pf2e-subsystem';
     static DEFAULT_OPTIONS = {
         tag: "form",
-        classes: ['pf2e-subsystem', 'sheet', 'pf2e', 'action', 'item'],
+        classes: ['pf2e-subsystem', 'app', 'window-app', 'sheet', 'pf2e', 'action', 'item', 'themed', 'theme-light'],
         id: 'subsystems-configure',
         position: {
             width: 775,
@@ -17,32 +18,48 @@ export class BasePF2eSub extends HandlebarsApplicationMixin(ApplicationV2) {
             frame: true,
         },
         form: {
-            handler: BasePF2eSub._updateObject,
-            submitOnChange: false,
+            handler: BasePF2eSub._onSubmit,
+            submitOnChange: true,
             closeOnSubmit: false,
-            tabs: [
-                {
-                    navSelector: ".tabs",
-                    contentSelector: ".sheet-body",
-                    initial: "description",
-                },
-            ],
-            dragDrop: [
-                { dropSelector: ".itemBar" },
-            ]
         },
         actions: {
-
+            addReward: BasePF2eSub.addReward,
+            removeReward: BasePF2eSub.removeReward,
+            expandReward: BasePF2eSub.expandReward,
+            addAction: BasePF2eSub.addAction,
+            deleteAction: BasePF2eSub.removeAction,
+            toggleSummary: BasePF2eSub.expandAction,
+            removeRewardItem: BasePF2eSub.removeRewardItem,
+            editAction: BasePF2eSub.editAction,
+            saveAction: BasePF2eSub.saveAction,
         },
+        dragDrop: [{ dropSelector: "[data-drop]" }]
     };
+    
     static PARTS = {
         header: {template: "modules/pf2e-subsystems/templates/sub-header.hbs" },
         tabs: { template: "modules/pf2e-subsystems/templates/sub-tabs.hbs" },
-        content: { template: "modules/pf2e-subsystems/templates/sub-description.hbs" },
+        wrapper: { template: "modules/pf2e-subsystems/templates/sub-tab-wrapper.hbs" },
+        description: { template: "modules/pf2e-subsystems/templates/sub-tab-description.hbs", scrollable: [''] },
+        actions: { template: "modules/pf2e-subsystems/templates/sub-tab-actions.hbs", scrollable: [''] },
+        rewards: { template: "modules/pf2e-subsystems/templates/sub-tab-rewards.hbs", scrollable: [''] },
+    };
+
+    static TABS = {
+        primary: {
+            tabs: [
+                { id: 'description', label: 'Description' }, 
+                { id: 'actions', label: 'Actions' }, 
+                { id: 'rewards', label: 'Rewards' }
+            ],
+            initial: 'description',
+        },
     };
 
     constructor(party, object, ...options) {
-        super(object, options);
+        super(options);
+        this.#dragDrop = this.#createDragDropHandler();
+
         this.party = party;
         this.object = foundry.utils.mergeObject(object, {
             title: "New Activity",
@@ -62,144 +79,89 @@ export class BasePF2eSub extends HandlebarsApplicationMixin(ApplicationV2) {
         }
     }
 
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            title: 'Edit Subsystem',
-            id: 'subsystems-configure',
-            classes: ['pf2e-subsystem', 'sheet', 'pf2e', 'action', 'item'],
-            template: "modules/pf2e-subsystems/templates/edit-subsystem.hbs",
-            width: 775,
-            height: 500,
-            closeOnSubmit: false,
-            submitOnChange: true,
-            resizable: true,
-            tabs: [
-                {
-                    navSelector: ".tabs",
-                    contentSelector: ".sheet-body",
-                    initial: "description",
-                },
-            ],
-            hasSidebar: true,
-            dragDrop: [
-                { dropSelector: ".itemBar" },
-            ]
+    #createDragDropHandler() {
+        return this.options.dragDrop.map((dd) => {
+            dd.permissions = {
+                drop: () => true,
+            };
+            dd.callbacks = {
+                dragover: this._onDragOver.bind(this),
+                drop: this._onDrop.bind(this),
+            };
+            return new DragDrop(dd);
         });
     }
 
     _configureRenderOptions(options) {
         super._configureRenderOptions(options);
-        options.parts = ['header', 'tabs', 'content'];
+        options.parts = ['header', 'tabs', 'wrapper', 'description', 'actions', 'rewards'];
         console.log("subsystem options", options)
         console.log("This", this)
     }
 
-    async getData(options = {}) {
-        const data = super.getData(options);
-        data.title = this.object.title;
-
-        const enrichedContent = {};
-        enrichedContent.description = await TextEditor.enrichHTML(this.object.description)
-
-        return {
-            ...data,
-            enrichedContent: enrichedContent,
+    async _prepareContext(options) {
+        console.log("Preparing context with options", options);
+        const context = {
+            tabs: this._prepareTabs("primary"),
+            object: this.object,
+            enrichedContent: {
+                description: await foundry.applications.ux.TextEditor.implementation.enrichHTML(this.object.description)
+            },
             owner: game.user.isGM,
             editable: true,
         };
+
+        // Build enriched actions grouped by action type keyed by the type name.
+        // Each action will include an `enrichedDescription` produced by the
+        // Foundry TextEditor enrichment.
+        const actionsByType = {};
+        for (const [typeName, actions] of Object.entries(this.object.actions || {})) {
+            const enrichedById = {};
+            for (const [id, action] of Object.entries(actions || {})) {
+                const enriched = { id };
+                const stringKeys = Object.keys(action).filter(k => typeof action[k] === "string");
+                await Promise.all(stringKeys.map(async (k) => {
+                    enriched[k] = await foundry.applications.ux.TextEditor.implementation.enrichHTML(action[k] || "");
+                }));
+                enrichedById[id] = enriched;
+            }
+            actionsByType[typeName] = enrichedById;
+        }
+
+        context.enrichedContent.actions = actionsByType;
+
+        console.log("context", context);
+        return context;
     }
 
-    activateListeners($html) {
-        super.activateListeners($html);
-
-        for (const button of $html.find("a.remove-reward")) {
-            button.addEventListener("click", async () => {
-                await this.removeReward(button.dataset.id)
-            });
+    async _preparePartContext(partId, context) {
+        switch (partId) {
+            case 'description':
+            case 'actions':
+            case 'rewards':
+                context.tab = context.tabs[partId];
+                break;
+            default:
         }
+        return context;
+    }
 
-        const addReward = $html.find("[data-action=add-reward]")
-        addReward[0]?.addEventListener("click", async () => {
-            await this.addReward()
-        });
+    _onRender(context, options) {
+        this.#dragDrop.forEach((dd) => dd.bind(this.element));
 
-        for(const reward of $html.find("section.rewards-form")) {
-            let id = reward.dataset.id;
-
-            for(const icon of $(reward).find("[data-action=remove-item]")) {
-                icon.addEventListener("click", () => {
-                    this.removeRewardItem(id, icon.dataset.index);
-                });
-            }
-        }
-
-        for(const rewardTitle of $html.find("[data-action=expand-reward]")) {
-            rewardTitle.addEventListener("click", () => {
-                this.expandReward($html, rewardTitle.dataset.id);
-            });
-        }
-
-        for(const expandAction of $html.find("[data-action=toggle-summary]")) {
-            expandAction.addEventListener("click", () => {
-                let id = $(expandAction).closest("li")[0].dataset.id;
-                this.expandAction($html, id)
-            });
-        }
-
-        for(const editAction of $html.find("[data-action=edit-action]")) {
-            editAction.addEventListener("click", async () => {
-                let id = editAction.dataset.id;
-                let actionSummary = $html.find(`.action-summary[data-id=${id}]`)[0];
-                let type = editAction.dataset.type;
-                let icon = $(editAction).find("i")[0];
-
-                if(editAction.dataset.tooltip === "Edit Action") {
-                    if(actionSummary.hidden) this.expandAction($html, id);
-                    actionSummary.innerHTML = await this.editActionHTML(type, id);
-
-                    icon.classList.remove("fa-edit");
-                    icon.classList.add("fa-save");
-                    editAction.dataset.tooltip = "Save Action";
-                }
-                else {
-                    actionSummary.innerHTML = await this.saveActionHTML(type, id);
-
-                    icon.classList.remove("fa-save");
-                    icon.classList.add("fa-edit");
-                    editAction.dataset.tooltip = "Edit Action";
-                }
-
-                this.activateListeners($(actionSummary));
-
-            });
-        }
-
-        for(const addAction of $html.find("[data-action=add-action]")) {
-            addAction.addEventListener("click", () => {
-                this.addAction(addAction.dataset.type)
-            });
-        }
-
-        for(const deleteAction of $html.find("[data-action=delete-action]")) {
-            deleteAction.addEventListener("click", () => {
-                console.log("data",deleteAction.dataset)
-                this.removeAction(deleteAction.dataset.type, deleteAction.dataset.id);
-            });
-        }
-
-        const rewards = $html.find(".rewards-forms");
+        const rewards = this.element.querySelectorAll(".rewards-forms");
         if (rewards[0]) {
             Sortable.create(rewards[0], {
                 handle: ".drag-handle",
                 animation: 200,
                 direction: "vertical",
                 dragClass: "drag-preview",
-                dragoverBubble: true,
+                dragoverBubble: false,
                 easing: "cubic-bezier(1, 0, 0, 1)",
                 fallbackOnBody: true,
                 filter: "div.item-summary",
                 ghostClass: "drag-gap",
-                group: "inventory",
+                group: "rewards",
                 preventOnFilter: false,
                 swapThreshold: 0.25,
             
@@ -215,26 +177,38 @@ export class BasePF2eSub extends HandlebarsApplicationMixin(ApplicationV2) {
         }
 
         if(this.object?.expandedReward) {
-            this.expandReward($(this._element[0]), this.object.expandedReward, true);
+            this.expandReward(this.object.expandedReward, true);
+        }
+        if(this.object?.expandedAction) {
+            //this.expandAction(this.object.expandedAction, true);
         }
     }
 
     async _onDrop(event) {
-        const rewardID = event.target.dataset.id;
-        const dropData = TextEditor.getDragEventData(event);
-        const element = event.target.closest('.itemBar');
+        console.log("Drop event:", event);
+        const dropData = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
+        console.log("dropData", dropData);
+        const element = event.target.closest('[data-drop]');
+        const rewardID = element.dataset.id;
 
         $(element).removeClass('highlight');
+        console.log("element", element)
 
-        if(dropData.type === "Item") {
-            let item = await fromUuid(dropData.uuid);
-            this.addRewardItem(rewardID, item);
+        switch(element.className) {
+            case "rewardItems":
+                if(dropData.type === "Item") {
+                    let item = await fromUuid(dropData.uuid);
+                    this.addRewardItem(rewardID, item);
+                }
+                break;
+            default:
+                return;
         }
 
     }
 
     _onDragOver(event) {
-        const element = event.target.closest('.itemBar');
+        const element = event.target.closest('[data-drop]');
 
         if ($(element).hasClass('highlight')) return;
 
@@ -253,37 +227,30 @@ export class BasePF2eSub extends HandlebarsApplicationMixin(ApplicationV2) {
         return plugins;
     }
 
-    async _updateObject(_event, formData) {
-        console.log("event",_event)
+    static async _onSubmit(event, form, formData) {
+        console.log("event",event)
+        console.log("form", form)
         console.log("formdata", formData)
-
-        for(let [name, value] of Object.entries(formData)) {
-            name = name.split(".");
-            switch (name.length) {
-                case 1:
-                    this.object[name[0]] = value;
-                    break;
-                case 2:
-                    this.object[name[0]][name[1]] = value;
-                    break;
-                case 3:
-                    this.object[name[0]][name[1]][name[2]] = value;
-                    break;
-                case 4:
-                    this.object[name[0]][name[1]][name[2]][name[3]] = value;
-                    break;
-            }
-        }
+        
+        const data = foundry.utils.expandObject(formData.object);
+        console.log("expanded data", data)
+        this.object = foundry.utils.mergeObject(this.object, data);
+        console.log("merged object", this.object);
         
         await this.party.subsystems.updateData(foundry.utils.deepClone(this.object))
+
+        if(event.isTrusted)this.render();
     }
 
-    async addAction(actionType, options = {}) {
+    static async addAction(event, target, options={}) {
+        let actionType = target.dataset.type;
+        console.log("options", options)
         let action = foundry.utils.mergeObject(options, {
             id: foundry.utils.randomID(),
             name: "New Action",
-            description: "",
-        },{overwrite: false} )
+            description: "Give your action a description...",
+            editable: true,
+        }, {overwrite: false})
         console.log("action",action)
 
         this.object.actions[actionType][action.id] = action;
@@ -293,7 +260,9 @@ export class BasePF2eSub extends HandlebarsApplicationMixin(ApplicationV2) {
         this.render();
     }
 
-    async removeAction(actionType, id) {
+    static async removeAction(event, target) {
+        let actionType = target.dataset.type;
+        let id = target.dataset.id;
         Dialog.confirm({
             title: `Delete Action`,
             content: `<h4>Are You Sure?</h4><p>This Action will be permanently deleted and cannot be recovered.</p>`,
@@ -306,24 +275,37 @@ export class BasePF2eSub extends HandlebarsApplicationMixin(ApplicationV2) {
         });
     }
     
-    async editActionHTML(actionType, id) {
-        let actionData = this.object.actions[actionType][id];
+    static async editAction(event, target) {
+        let actionType = target.dataset.type;
+        let id = target.dataset.id;
+        let actionSummary = $(this.element).find(`.action-summary[data-id=${id}]`)[0];
 
-        const actionHTML = await foundry.applications.handlebars.renderTemplate(actionData.editTemplate, actionData);
+        this.object.actions[actionType][id].editable = true;
 
-        return actionHTML;
+        await this.party.subsystems.updateData(foundry.utils.deepClone(this.object));
+        this.render();
     }
 
-    async saveActionHTML(actionType, id) {
-        let actionData = this.object.actions[actionType][id];
+    static async saveAction(event, target) {
+        let actionType = target.dataset.type;
+        let id = target.dataset.id;
 
-        const actionHTML = await foundry.applications.handlebars.renderTemplate(actionData.summaryTemplate, actionData);
+        this.object.actions[actionType][id].editable = false;
 
-        return actionHTML;
+        await this.party.subsystems.updateData(foundry.utils.deepClone(this.object));
+        this.render();
     }
 
-    async expandAction($html, id, fast=false) {
+    static async expandAction(event, target, fast=false) {
+        let id = target.dataset.id;
+        
+        this.expandAction(id, fast);
+    }
+
+    async expandAction(id, fast = false) {
+        const $html = $(this.element);
         const duration = fast ? 0 : 0.4
+
         for(const actionSummary of $html.find(".action-summary")) {
             if(actionSummary.dataset.id === id && actionSummary.hidden) {
                 gsap.fromTo(
@@ -331,6 +313,8 @@ export class BasePF2eSub extends HandlebarsApplicationMixin(ApplicationV2) {
                     { height: 0, opacity: 0, hidden: false },
                     { height: "auto", opacity: 1, duration},
                 )
+                //this.object.expandedAction = id;
+                //this.party.subsystems.updateData(foundry.utils.deepClone(this.object));
             }
             else if(actionSummary.dataset.id === id) {
                 gsap.to(actionSummary, {
@@ -349,7 +333,7 @@ export class BasePF2eSub extends HandlebarsApplicationMixin(ApplicationV2) {
         }
     }
 
-    async addReward() {
+    static async addReward() {
         let reward = {
             id: foundry.utils.randomID(),
             received: false,
@@ -372,7 +356,8 @@ export class BasePF2eSub extends HandlebarsApplicationMixin(ApplicationV2) {
         this.render();
     }
 
-    async removeReward(id) {
+    static async removeReward(event, target) {
+        let id = target.dataset.id;
         Dialog.confirm({
             title: `Delete Reward`,
             content: `<h4>Are You Sure?</h4><p>This Reward will be permanently deleted and cannot be recovered.</p>`,
@@ -385,8 +370,14 @@ export class BasePF2eSub extends HandlebarsApplicationMixin(ApplicationV2) {
         });
     }
 
-    async expandReward($html, id, fast = false) {
+    static async expandReward(event, target, fast = false) {
+        let id = target.dataset.id;
+        this.expandReward(id);
+    }
+
+    async expandReward(id, fast = false) {
         let allCollapsed = true;
+        const $html = $(this.element);
         const duration = fast ? 0 : 0.4
         for(const rewardSummary of $html.find(".reward-summary")) {
             if(rewardSummary.dataset.id === id && rewardSummary.hidden) {
@@ -423,6 +414,7 @@ export class BasePF2eSub extends HandlebarsApplicationMixin(ApplicationV2) {
     async addRewardItem(id, item) {
         console.log("item", item)
         let source = await fromUuid(item._stats.compendiumSource);
+        console.log("source", source)
         if(!source) return;
         this.object.rewards[id].items.push(await foundry.utils.deepClone(source));
         this.object.rewards[id].enrichedItems.push(await TextEditor.enrichHTML(`@UUID[${source.uuid}]{${source.name}}`));
@@ -431,7 +423,9 @@ export class BasePF2eSub extends HandlebarsApplicationMixin(ApplicationV2) {
         this.render();
     }
 
-    async removeRewardItem(id, index) {
+    static async removeRewardItem(event, target) {
+        let id = target.dataset.rewardid;
+        let index = target.dataset.index;
         Dialog.confirm({
             title: `Remove Item`,
             content: `<h4>Are You Sure?</h4><p>This Item will be permanently removed and cannot be recovered.</p>`,

@@ -1,0 +1,25 @@
+<section class="points-section">
+    <label for="points">Victory Points:</label>
+    {{#if action.editable}}
+        <input data-id="points" name="actions.{{type}}.{{action.id}}.points" type="number" value="{{action.points}}">
+    {{else}}
+        <div data-id="points">{{action.points}}</div>
+
+    {{/if}}
+</section>
+<section class="overcome-section">
+    <label for="overcome">Overcome:</label>
+    {{#if action.editable}}
+        <input data-id="overcome" name="actions.{{type}}.{{action.id}}.overcome" type="text" value="{{action.overcome}}">
+    {{else}}
+        <div data-id="overcome">{{{lookup (lookup (lookup enrichedContent.actions type) action.id) 'overcome'}}}</div>
+    {{/if}}
+</section>
+<section class="description-section">
+    {{#if action.editable}} 
+        <prose-mirror name="actions.{{type}}.{{action.id}}.description" value="{{action.description}}" toggled="true">
+        {{{lookup (lookup (lookup enrichedContent.actions type) action.id) 'description'}}}
+        </prose-mirror>
+    {{else}} {{{lookup (lookup (lookup enrichedContent.actions type) action.id) 'description'}}}
+    {{/if}}
+</section>  

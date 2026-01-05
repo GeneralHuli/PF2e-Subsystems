@@ -1,0 +1,50 @@
+<section 
+    class='tab actions {{tab.cssClass}}'
+    data-tab='actions' 
+    data-group='primary'
+>
+    <section class="action-list">
+        {{#each object.actionTypes as |type|}}
+            <header>
+                <h3 class="actionType-name">{{type}}</h3>
+                <div class="actionType-controls">
+                    <a data-action="addAction" data-tooltip="Create new '{{type}}'" data-type={{type}}>
+                        <i class="fa-solid fa-fw fa-plus"></i>
+                    </a>
+                </div>
+            </header>
+            {{#unless (isEmpty (lookup @root.object.actions type))}}
+                <ul class="actions" data-type={{type}}>
+                {{#each (lookup @root.object.actions type) as |action|}}
+                    <li data-id={{action.id}}>
+                        <div class="data">
+                            <div class="action-name">
+                                <h4 class="name">
+                                    {{#if action.editable}}
+                                        <input data-id={{action.id}} name="actions.{{type}}.{{action.id}}.name" type="text" value="{{action.name}}" >
+                                    {{else}}
+                                        <a data-action="toggleSummary" data-id={{action.id}}>{{action.name}}</a>
+                                    {{/if}}
+                                </h4>
+                            </div>
+                            <div class="action-controls">
+                                <a data-action={{#if action.editable}}"saveAction"{{else}}"editAction"{{/if}} data-tooltip={{#if action.editable}}"Save Action"{{else}}"Edit Action"{{/if}} data-id={{action.id}} data-type={{type}}>
+                                    <i class="fa-solid fa-fw {{#if action.editable}}fa-save{{else}}fa-edit{{/if}}"></i>
+                                </a>
+                                <a data-action="deleteAction" data-tooltip="Delete Action" data-id={{action.id}} data-type={{type}}>
+                                    <i class="fa-solid fa-fw fa-trash"></i>
+                                </a>
+                            </div>
+                            <div class="action-summary" data-id={{action.id}} {{!-- {{#unless action.editable}}hidden="hidden"{{/unless}} --}}>
+                                {{#if (lookup @root.actionTemplates type)}}
+                                    {{> (lookup @root.actionTemplates type) action=action type=type editable=@root.editable object=@root.object enrichedContent=@root.enrichedContent}}
+                                {{/if}}
+                            </div>
+                        </div>
+                    </li>
+                {{/each}}
+                </ul>
+            {{/unless}}
+        {{/each}}
+    </section>
+</section>

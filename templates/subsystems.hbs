@@ -18,7 +18,7 @@
             <div class="activities" {{#unless @root.isGM}}readonly{{/unless}} data-view={{subsystem.view}}>
                 {{#if (lookup @root.activities subsystem.view)}}
                     {{#each (lookup @root.activities subsystem.view) as |activity|}}
-                        <section class="activity" id={{activity.id}}>
+                        <section class="activity" data-id={{activity.id}}>
                             <div class="sub-data">
                               <div class="title" data-action="edit-activity">{{activity.title}}</div>
                             </div>

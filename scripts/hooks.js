@@ -10,10 +10,6 @@ export const HooksPF2e_Subsystems = {
             console.log("PF2e Subsystems | Initializing pf2e-subsystems");
             let templates = [
                 "modules/pf2e-subsystems/templates/subsystems.hbs",
-                //"modules/pf2e-subsystems/templates/partials/vp-sidebar.hbs",
-
-                //"modules/pf2e-subsystems/templates/partials/edit-vp-action.hbs",
-                //"modules/pf2e-subsystems/templates/partials/summary-vp-action.hbs",
             ]
             await loadTemplates(templates);
 

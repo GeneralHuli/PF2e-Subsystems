@@ -1,0 +1,64 @@
+<section class="points-section">
+    <label for="points">Victory Points:</label>
+    {{#if action.editable}}
+        <input data-id="points" name="actions.{{type}}.{{action.id}}.points" type="number" value="{{action.points}}">
+    {{else}}
+        <div data-id="points">{{action.points}}</div>
+
+    {{/if}}
+{{!--     <select name="actions.{{type}}.{{action.id}}.groupSolo" data-id="group-solo" {{#unless action.editable}}disabled{{/unless}}>
+            <option value="group" {{#if (eq action.groupSolo "group")}}selected{{/if}}>(group)</option>
+            <option value="solo" {{#if (eq action.groupSolo "solo")}}selected{{/if}}>(individual)</option>
+    </select>
+</section>
+<section class="overcome-section">
+    <label for="overcome">Overcome:</label>
+    {{#if action.editable}}
+        <input data-id="overcome" name="actions.{{type}}.{{action.id}}.overcome" type="text" value="{{action.overcome}}">
+    {{else}}
+        <div data-id="overcome">{{{lookup (lookup (lookup enrichedContent.actions type) action.id) 'overcome'}}}</div>
+    {{/if}} --}}
+</section>
+<section class="description-section">
+    {{#if action.editable}} 
+        <prose-mirror name="actions.{{type}}.{{action.id}}.description" value="{{action.description}}" toggled="true">
+        {{{lookup (lookup (lookup enrichedContent.actions type) action.id) 'description'}}}
+        </prose-mirror>
+        {{!-- <textarea data-id="description" name="actions.{{type}}.{{action.id}}.description" placeholder="Description">{{action.description}}</textarea> --}}
+    {{else}} {{{lookup (lookup (lookup enrichedContent.actions type) action.id) 'description'}}}
+    {{/if}}
+</section>  
+
+{{!-- <section class="crit-success-section">
+    <label for="crit-success">Critical Success:</label>
+    <textarea
+        data-id="crit-success"
+        name="actions.{{type}}.{{action.id}}.critSuccess"
+        placeholder="Critical Success"
+        {{#unless action.editable}}readonly aria-readonly="true"{{/unless}}
+    >{{~action.critSuccess~}}</textarea>
+</section>
+<section class="success-section">
+    <label for="success">Success:</label>
+    {{#if action.editable}}
+        <input data-id="success" name="actions.{{type}}.{{action.id}}.success" type="text" value="{{action.success}}">
+    {{else}}
+        <div>{{{lookup (lookup (lookup enrichedContent.actions type) action.id) 'success'}}}</div>
+    {{/if}}
+</section>
+<section class="failure-section">
+    <label for="failure">Failure:</label>
+    {{#if action.editable}}
+        <input data-id="failure" name="actions.{{type}}.{{action.id}}.failure" type="text" value="{{action.failure}}">
+    {{else}}
+        <div>{{{lookup (lookup (lookup enrichedContent.actions type) action.id) 'failure'}}}</div>
+    {{/if}}
+</section>
+<section class="crit-failure-section">
+    <label for="crit-failure">Critical Failure:</label>
+    {{#if action.editable}}
+        <input data-id="crit-failure" name="actions.{{type}}.{{action.id}}.critFailure" type="text" value="{{action.critFailure}}">
+    {{else}}
+        <div>{{{lookup (lookup (lookup enrichedContent.actions type) action.id) 'critFailure'}}}</div>
+    {{/if}}
+</section> --}}

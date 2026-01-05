@@ -1,0 +1,54 @@
+<section 
+    class='tab rewards {{tab.cssClass}}' 
+    data-tab='rewards' 
+    data-group='primary'
+>
+    <div class="rewards-forms">
+        {{#each object.rewards as |reward|}}
+            <section class="rewards-form" data-id={{reward.id}}>
+                <header class="reward-header">
+                    <i class="fa-solid fa-bars drag-handle"></i>
+                    <h3 class="title" data-action="expandReward" data-id={{reward.id}}>Reward Rank</h3>
+                    <input name="rewards.{{reward.id}}.rank" type="number" value={{reward.rank}} style="width: 3rem;"/>
+                    <div class="item-controls">
+                        <a class="remove-reward" data-id={{reward.id}} data-tooltip="Remove Reward" data-action="removeReward">
+                            <i class="fa-solid fa-fw fa-trash"></i>
+                        </a>
+                    </div>
+                </header>
+                <div class="container reward-summary" style="display: grid;" data-id={{reward.id}} hidden="hidden">
+                    <div class="stacked">
+                        <div class="grid-item xp">
+                            <label>XP</label>
+                            <input name="rewards.{{reward.id}}.xp" type="number" value={{reward.xp}} />
+                        </div>
+                        <div class="grid-item treasure">
+                            <label>Treasure:</label>
+                            <label>pp</label><input name="rewards.{{reward.id}}.treasure.pp" type="number" value={{reward.treasure.pp}} >
+                            <label>gp</label><input name="rewards.{{reward.id}}.treasure.gp" type="number" value={{reward.treasure.gp}} >
+                            <label>sp</label><input name="rewards.{{reward.id}}.treasure.sp" type="number" value={{reward.treasure.sp}} >
+                            <label>cp</label><input name="rewards.{{reward.id}}.treasure.cp" type="number" value={{reward.treasure.cp}} >
+                        </div>
+                    </div>
+                    <div class="grid-item items">
+                        <label>Items</label>
+                        <div class="rewardItems" data-drop="true" data-id={{reward.id}} aria-label="Drag items here">
+                            {{#each reward.enrichedItems}}{{{itemButton @index this reward.id}}}{{/each}}
+                            <span data-placeholder="Drag items here" aria-hidden="true"></span>
+                        </div>
+                    </div>
+                    <div class="grid-item notes">
+                        <label>Notes</label>
+                        <textarea name="rewards.{{reward.id}}.notes" placeholder="Notes">{{reward.notes}}</textarea>
+                    </div>
+                </div>
+            </section>
+        {{/each}}
+    </div>
+    <div class="create-reward">
+        <a data-action="addReward">
+            <i class="fa-solid fa-plus"></i>
+            New Reward
+        </a>
+    </div>
+</section>

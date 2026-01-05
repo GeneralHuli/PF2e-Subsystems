@@ -1,11 +1,17 @@
 import { HooksPF2e_Subsystems } from "./hooks.js";
 import { VPPF2eSub } from "./subsystems/vp-subsystem/pf2e-subs-vp.js";
 import { ChasePF2eSub } from "./subsystems/chase-subsystem/pf2e-subs-chase.js";
+import { InfluencePF2eSub } from "./subsystems/influence-subsystem/pf2e-subs-influence.js";
+import { ResearchPF2eSub } from "./subsystems/research-subsystem/pf2e-subs-research.js";
+import { InfiltrationPF2eSub } from "./subsystems/infiltration-subsystem/pf2e-subs-infiltration.js";
 import { registerHandlebarsHelpers } from "./helpers.js"
 
 const SUBSYSTEMS = {
     vpsubs: {classObj: VPPF2eSub, name: "Victory Points", view: "vpsubs"},
     chasesubs: {classObj: ChasePF2eSub, name: "Chase", view: "chasesubs"},
+    influencesubs: {classObj: InfluencePF2eSub, name: "Influence", view: "influencesubs"},
+    researchsubs: {classObj: ResearchPF2eSub, name: "Research", view: "researchsubs"},
+    infiltrationsubs: {classObj: InfiltrationPF2eSub, name: "Infiltration", view: "infiltrationsubs"},
 }
 
 //Register the Hooks and Handlebars Helpers
@@ -134,12 +140,12 @@ class PF2e_Subsystems {
         for (const activity of this.html.find(".activity")) {
             let title = $(activity).find(".title")[0];
             title.addEventListener("click", () => {
-                this.editSubsystem({subType: this.currentView, id: activity?.id});
+                this.editSubsystem({subType: this.currentView, id: activity?.dataset.id});
             });
         }
 
-        for(const activity of this.html.find("section.activity[id]")) {
-            let id = activity.id;
+        for(const activity of this.html.find("section.activity[data-id]")) {
+            let id = activity.dataset.id;
             for(const button of $(activity).find("[data-action=delete-activity]")) {
                 button.addEventListener("click", () => {
                     this.deleteSubsystem(id);
